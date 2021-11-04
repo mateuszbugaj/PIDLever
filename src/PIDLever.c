@@ -5,32 +5,7 @@
 #include <avr/power.h>
 #include <util/delay.h>
 #include <ROT_SENSOR.h>
-
-#define PWM_OUTPUT PB1
-#define H_BRIDGE_DIR_A PB6
-#define H_BRIDGE_DIR_B PB7
-
-/*
-    TCCR1A
-        Clear OC1A on Compare Match, set OC1A at BOTTOM
-        Set waveform generation mode to fast 8-bit PWM
-
-    TCCR1B
-        Set prescaler to /8 (no prescaling)
-        This gives 1000 cycles per ms. for 1 MHz clock
-
-    PWM Frequency
-        CPU Clock / (Prescaler * [1 + TOP])
-        Where TOP is equal to 0x00FF (255)
-
-        1_000_000 / (8 * 256) = 488 Hz
-*/
-void initFastPWM(void) {
-    TCCR1A = (1 << COM1A1) | (1 << WGM10);
-    TCCR1B = (1 << CS11) | (1 << WGM12);
-
-    DDRB |= (1 << PWM_OUTPUT);
-}
+#include <MotorControl.h>
 
 /*
     Initialize ADC
@@ -55,16 +30,20 @@ uint8_t readPot() {
     return ADCH;
 }
 
-void initHBridgeDriver() {
-    DDRB |= (1 << H_BRIDGE_DIR_A) | (1 << H_BRIDGE_DIR_B);
-
-    PORTB &= ~(1 << H_BRIDGE_DIR_B);
-    PORTB |= (1 << H_BRIDGE_DIR_A);
+void driveMotor(uint8_t potReading){
+    if(potReading < 128){
+        setDirection(RIGHT);
+        setPWMDutyCycle(128 - potReading);
+    } else {
+        setDirection(LEFT);
+        setPWMDutyCycle(potReading - 128);
+    }
 }
 
 int main(void) {
     /* Set CPU clock at 1 MHz */
     clock_prescale_set(clock_div_8);
+
     initFastPWM();
     initAdcTemp();
     initHBridgeDriver();
@@ -73,9 +52,7 @@ int main(void) {
 
     printLogNum("State", getAS5600Status(), BINARY);
     while (1) {
-        OCR1A = readPot();
-        // printLogNum("Pot", OCR1A, DECIMAL);
-
+        driveMotor(readPot());
         printLogNum("Angle", getAngle(), DECIMAL);
         // _delay_ms(100);
     }
