@@ -30,14 +30,48 @@ uint8_t readPot() {
     return ADCH;
 }
 
-void driveMotor(uint8_t potReading){
-    if(potReading < 128){
+void driveMotor(int8_t signal){
+    if(signal < 0){
         setDirection(RIGHT);
-        setPWMDutyCycle(128 - potReading);
+        signal *= -1;
     } else {
         setDirection(LEFT);
-        setPWMDutyCycle(potReading - 128);
     }
+
+    setPWMDutyCycle(signal);
+
+    // if(potReading < 128){
+    //     setDirection(RIGHT);
+    //     setPWMDutyCycle(128 - potReading);
+    // } else {
+    //     setDirection(LEFT);
+    //     setPWMDutyCycle(potReading - 128);
+    // }
+}
+
+/*
+    Translate 8-bit target rotation reading 
+    into 12-bit number
+*/
+uint16_t readTargetRotation(uint8_t reading){
+    return reading * 16;
+}
+
+int8_t PID(uint16_t target, uint16_t reading){
+    uint16_t error = target - reading;
+    uint8_t signal;
+    uint8_t boost = 1;
+
+    signal = error/16 * boost;
+
+    // if(error < 0){
+    //     error *= -1;
+    //     signal = 128 - (error/16);
+    // } else {
+    //     signal = (error/16) - 128;
+    // }
+
+    return signal;
 }
 
 int main(void) {
@@ -50,10 +84,16 @@ int main(void) {
     initUSART();
     TWI_init(LOG_DISABLED);
 
+    /* Represends 0-360 degrees as 12-bit number stored in 16-bit register */
+    uint16_t targetAngle, currentAngle;
+
     printLogNum("State", getAS5600Status(), BINARY);
     while (1) {
-        driveMotor(readPot());
-        printLogNum("Angle", getAngle(), DECIMAL);
+        targetAngle = readPot();
+        currentAngle = getAngle();
+
+        driveMotor(PID(readTargetRotation(targetAngle), currentAngle));
+        printLogNum("Angle", currentAngle/16, DECIMAL);
         // _delay_ms(100);
     }
 
