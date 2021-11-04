@@ -30,3 +30,7 @@ uint16_t getAngle() {
 
     return (angle_H << 8) | angle_L;
 }
+
+uint8_t getAS5600Status(){
+    return readRegister(AS5600_STATUS, SEND_NACK);
+}

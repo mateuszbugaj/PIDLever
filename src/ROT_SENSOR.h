@@ -11,9 +11,18 @@
 #define AS5600_ANGLE_L 0x0D  // Angle least significant bits
 #define AS5600_AGC 0x1A      // AGC, gain
 
-/*
-    Single byte write sequence
-*/
+
 void writeToRegister(uint8_t registerAddres, uint8_t value);
 uint8_t readRegister(uint8_t registerAddress, bool ACK);
 uint16_t getAngle();
+
+/*
+    Reading status register.
+    In binary:
+        0b # # MD ML MH # # #
+
+    MD - Magnet was detected
+    ML - AGC maximum gain overflow, magnet too weak
+    MH - AGC minimum gain overflow, magnet too strong
+*/
+uint8_t getAS5600Status();

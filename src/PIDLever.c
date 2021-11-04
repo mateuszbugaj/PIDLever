@@ -71,8 +71,7 @@ int main(void) {
     initUSART();
     TWI_init(LOG_DISABLED);
 
-    printString("Pot");
-    printLogNum("State", readRegister(AS5600_STATUS, SEND_NACK), BINARY);
+    printLogNum("State", getAS5600Status(), BINARY);
     while (1) {
         OCR1A = readPot();
         // printLogNum("Pot", OCR1A, DECIMAL);
