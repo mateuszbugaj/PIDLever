@@ -4,16 +4,11 @@
 #include <avr/io.h>
 #include <avr/power.h>
 #include <util/delay.h>
+#include <ROT_SENSOR.h>
 
 #define PWM_OUTPUT PB1
 #define H_BRIDGE_DIR_A PB6
 #define H_BRIDGE_DIR_B PB7
-
-#define AS5600_ADDRESS 0x36
-#define AS5600_STATUS 0x0B   // 5 - Magnet was detected 4 - Magnet too weak 3 - Magnet too strong
-#define AS5600_ANGLE_H 0x0C  // Angle most significant bits
-#define AS5600_ANGLE_L 0x0D  // Angle least significant bits
-#define AS5600_AGC 0x1A      // AGC, gain
 
 /*
     TCCR1A
@@ -67,38 +62,6 @@ void initHBridgeDriver() {
     PORTB |= (1 << H_BRIDGE_DIR_A);
 }
 
-/*
-    Single byte write sequence
-*/
-void writeToRegister(uint8_t registerAddres, uint8_t value) {
-    TWI_start();
-    TWI_sendAddress(AS5600_ADDRESS, WRITE_BYTE);
-    TWI_sendData(registerAddres);
-    TWI_sendData(value);
-    TWI_stop();
-}
-
-/*
-    Single byte read sequence
-*/
-uint8_t readRegister(uint8_t registerAddress, bool ACK) {
-    uint8_t value;
-
-    TWI_start();
-    TWI_sendAddress(AS5600_ADDRESS, WRITE_BYTE);
-    TWI_sendData(registerAddress);
-    TWI_start();
-    TWI_sendAddress(AS5600_ADDRESS, READ_BYTE);
-    value = TWI_getData(ACK);
-    TWI_stop();
-
-    return value;
-}
-
-uint16_t generateAngle(uint8_t bits_H, uint8_t bits_L) {
-    return (bits_H << 8) | bits_L;
-}
-
 int main(void) {
     /* Set CPU clock at 1 MHz */
     clock_prescale_set(clock_div_8);
@@ -108,17 +71,13 @@ int main(void) {
     initUSART();
     TWI_init(LOG_DISABLED);
 
-    uint8_t angle_H, angle_L;
-
     printString("Pot");
     printLogNum("State", readRegister(AS5600_STATUS, SEND_NACK), BINARY);
     while (1) {
         OCR1A = readPot();
         // printLogNum("Pot", OCR1A, DECIMAL);
-        angle_H = readRegister(AS5600_ANGLE_H, SEND_NACK);
-        angle_L = readRegister(AS5600_ANGLE_L, SEND_NACK);
 
-        printLogNum("Angle", generateAngle(angle_H, angle_L), DECIMAL);
+        printLogNum("Angle", getAngle(), DECIMAL);
         // _delay_ms(100);
     }
 
