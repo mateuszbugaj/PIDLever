@@ -8,7 +8,7 @@
 #include <MotorControl.h>
 
 /*
-    Initialize ADC
+    Initialize ADC to read analog potentiometer
     ADMUX
         Set AREF as voltage reference)
         Left adjust the results
@@ -26,11 +26,13 @@ void initAdcTemp() {
     ADCSRA |= (1 << ADPS2) | (1 << ADPS1) | (1 << ADPS0);
 }
 
+/* Read target rotation from analog potentiometer */
 uint8_t readPot() {
     return ADCH;
 }
 
-void driveMotor(int8_t signal){
+/* Set direction and duty cycle of pwm for DC motor */
+void driveMotor(int16_t signal){
     if(signal < 0){
         setDirection(RIGHT);
         signal *= -1;
@@ -38,15 +40,8 @@ void driveMotor(int8_t signal){
         setDirection(LEFT);
     }
 
-    setPWMDutyCycle(signal);
 
-    // if(potReading < 128){
-    //     setDirection(RIGHT);
-    //     setPWMDutyCycle(128 - potReading);
-    // } else {
-    //     setDirection(LEFT);
-    //     setPWMDutyCycle(potReading - 128);
-    // }
+    setPWMDutyCycle(signal);
 }
 
 /*
@@ -57,19 +52,12 @@ uint16_t readTargetRotation(uint8_t reading){
     return reading * 16;
 }
 
-int8_t PID(uint16_t target, uint16_t reading){
-    uint16_t error = target - reading;
-    uint8_t signal;
-    uint8_t boost = 1;
-
-    signal = error/16 * boost;
-
-    // if(error < 0){
-    //     error *= -1;
-    //     signal = 128 - (error/16);
-    // } else {
-    //     signal = (error/16) - 128;
-    // }
+int16_t PID(uint16_t target, uint16_t reading){
+    int16_t error = target - reading;
+    int16_t signal = 0;
+    float gain = 1.3;
+    signal = (error/16) * gain;
+    printLogNum("Signal", signal, DECIMAL);
 
     return signal;
 }
@@ -89,12 +77,10 @@ int main(void) {
 
     printLogNum("State", getAS5600Status(), BINARY);
     while (1) {
-        targetAngle = readPot();
+        targetAngle = readTargetRotation(readPot());
         currentAngle = getAngle();
 
-        driveMotor(PID(readTargetRotation(targetAngle), currentAngle));
-        printLogNum("Angle", currentAngle/16, DECIMAL);
-        // _delay_ms(100);
+        driveMotor(PID(targetAngle, currentAngle));
     }
 
     return 0;
