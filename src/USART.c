@@ -29,7 +29,7 @@ void transmitByte(unsigned char data){
 }
 
 void sendEndOfLine(){
-    transmitByte('\n');
+    // transmitByte('\n');
     transmitByte('\r');
 }
 

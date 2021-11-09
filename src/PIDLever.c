@@ -7,6 +7,9 @@
 #include <ROT_SENSOR.h>
 #include <MotorControl.h>
 
+#define BUTTON PB2 // Action button
+uint16_t timestamp = 0; // relativeTimeStamp
+
 /*
     Initialize ADC to read analog potentiometer
     ADMUX
@@ -52,12 +55,31 @@ uint16_t readTargetRotation(uint8_t reading){
     return reading * 16;
 }
 
+
+uint8_t isButtonPressed(void){
+    if(!(PINB & (1 << BUTTON))){
+        _delay_ms(1);
+        if(!(PINB & (1 << BUTTON))){
+            return 1;
+        }
+    }
+
+    timestamp = 0;
+    return 0;
+}
+
 int16_t PID(uint16_t target, uint16_t reading){
     int16_t error = target - reading;
     int16_t signal = 0;
     float gain = 1.3;
     signal = (error/16) * gain;
-    printLogNum("Signal", signal, DECIMAL);
+    // printLogNum("Signal", signal, DECIMAL);
+
+    if(isButtonPressed()){
+        char log[100] = { 0 };
+        snprintf(log, 100, "%d,%d,%d,%d,%d", timestamp++, target, reading, signal, error);
+        printString(log);
+    }
 
     return signal;
 }
@@ -71,6 +93,7 @@ int main(void) {
     initHBridgeDriver();
     initUSART();
     TWI_init(LOG_DISABLED);
+    PORTB |= (1 << BUTTON); // pull-up for button
 
     /* Represends 0-360 degrees as 12-bit number stored in 16-bit register */
     uint16_t targetAngle, currentAngle;
