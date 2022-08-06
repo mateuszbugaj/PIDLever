@@ -1,3 +1,5 @@
+#ifndef _TWI_H_
+#define _TWI_H_
 #include <stdbool.h>
 
 #define WRITE_BYTE 0
@@ -15,3 +17,5 @@ void TWI_sendAddress(unsigned char address, unsigned char direction);
 void TWI_sendData(unsigned char data);
 unsigned char TWI_getData(bool ack);
 void TWI_stop(void);
+
+#endif /* _TWI_H_ */

@@ -1,3 +1,6 @@
+
+#ifndef _MOTOR_CONTROL_H_
+#define _MOTOR_CONTROL_H_
 #include <avr/io.h>
 
 #define PWM_OUTPUT PB1
@@ -6,16 +9,12 @@
 
 enum DIRECTION {RIGHT, LEFT};
 
-/*
-    Initialize 8-bit PWM on PWM_OUTPUT pin
-*/
+/* Initialize 8-bit PWM on PWM_OUTPUT pin */
 void initFastPWM();
 
-/*
-    Initialize H-Bridge control pins
-*/
+/* Initialize H-Bridge control pins */
 void initHBridgeDriver();
-
 void setDirection(enum DIRECTION dir);
-
 void setPWMDutyCycle(uint8_t dutyCycle);
+
+#endif /* _MOTOR_CONTROL_H_ */

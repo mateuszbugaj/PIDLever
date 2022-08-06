@@ -9,6 +9,23 @@ Key components used:
 
 This is work in progress.
 
+Compile and flash controller software
+```
+make -C src/AVR/ && make flash -C src/AVR/
+```
+
+Build GUI interface
+```bash
+make -C src/GUI/
+```
+
+Run GUI with controller serial port output and input 
+```bash
+out/PIDLeverGUI < /dev/ttyUSB0 > /dev/ttyUSB0
+```
+
+!["GUIShowcase"](GUIshowcase.gif)
+
 ## Proportional component
 
 !["ProportionalControllerShowcase"](Pshowcase.gif)
